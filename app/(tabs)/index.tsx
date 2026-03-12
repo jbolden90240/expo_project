@@ -1,98 +1,123 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef } from 'react';
+import { Animated, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
+
+const DATA = [
+  { id: '1', title: 'Discover New Places' },
+  { id: '2', title: 'Adventure Awaits' },
+  { id: '3', title: 'Hidden Gems' },
+  { id: '4', title: 'Local Favorites' },
+  { id: '5', title: 'Travel Tips' },
+  { id: '6', title: 'City Life' },
+  { id: '7', title: 'Nature Trails' },
+  { id: '8', title: 'Top Destinations' },
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const navigation = useNavigation();
+  const animatedValues = useRef(DATA.map(() => new Animated.Value(0))).current;
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    Animated.stagger(
+      100,
+      animatedValues.map(anim =>
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        })
+      )
+    ).start();
+  }, []);
+
+  return (
+    <ScrollView>
+    <LinearGradient colors={['#ff6a00', '#ee0979']} style={styles.container}>
+      {/* Hero Section */}
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>Welcome Home</Text>
+        <Text style={styles.heroSubtitle}>Your adventure starts here</Text>
+      </View>
+
+      {/* Wrapped Cards Section */}
+      <View style={styles.cardsContainer}>
+        {DATA.map((item, index) => {
+          const scale = animatedValues[index].interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.8, 1],
+          });
+          const opacity = animatedValues[index];
+
+          return (
+            <Animated.View
+              key={item.id}
+              style={[styles.card, { transform: [{ scale }], opacity }]}
+            >
+              <TouchableOpacity onPress={() => navigation.navigate('SomeOtherScreen')}>
+                <Text style={styles.cardText}>{item.title}</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        })}
+      </View>
+    </LinearGradient>
+    </ScrollView>
   );
 }
 
+const CARD_WIDTH = width / 2 - 30; // 2 cards per row with spacing
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  hero: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  heroTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  heroSubtitle: {
+    fontSize: 20,
+    color: 'white',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  cardsContainer: {
+    flex: 2,
+    flexDirection: 'row',
+    flexWrap: 'wrap', // THIS MAKES IT WRAP
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  card: {
+    width: CARD_WIDTH,
+    height: 180,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  cardText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'white',
+    textAlign: 'center',
   },
 });
